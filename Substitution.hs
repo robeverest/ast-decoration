@@ -141,4 +141,19 @@ instance Sink Idx where
 instance (Substitutable stlc, InnerSyntax stlc ~ PreOpenSTLC stlc) => Sink (PreOpenSTLC stlc) where
 instance Sink OpenSTLC where
 
+-- Inlining
+--
+inline :: forall a env t. OpenSTLC (a ': env) t -> OpenSTLC env a -> OpenSTLC env t
+inline a (OpenSTLC b) = substitute f a
+  where
+    f :: forall t. Typeable t 
+      => Idx (a ': env) t
+      -> PreOpenSTLC OpenSTLC env t
+    f ZeroIdx      = b
+    f (SuccIdx ix) = Var ix
+
+type env :?> env' = forall t. Idx env t -> Maybe (Idx env' t)
+
+strengthen :: env :?> env' -> OpenSTLC env t -> Maybe (OpenSTLC env' t)
+strengthen v = reconstruct (fmap Var . v)
 
