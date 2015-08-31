@@ -17,6 +17,7 @@ module Substitution where
 
 import Control.Applicative
 import Data.Functor.Identity
+import Data.Typeable
 
 import AST
 
@@ -39,14 +40,14 @@ import AST
 -- A method for applying a substitution over a language. Given a function from an index in the environment to a term in the inner syntax (see below), perform substitution on a term in the outer syntax.
 type Substitute stlc =
   forall env env' a.
-       (forall a'. Idx env a' -> InnerSyntax stlc env' a')
+       (forall a'. Typeable a' => Idx env a' -> InnerSyntax stlc env' a')
     -> stlc env  a
     -> stlc env' a
 
 -- Effectful substitution. Like 'Substitute', but the supplied function carries some effect 'f'. This allows more interesting effects like partial substution or "strengthening"
 type Rebuild f stlc =
   forall env env' a.
-       (forall a'. Idx env a' -> f (InnerSyntax stlc env' a'))
+       (forall a'. Typeable a' => Idx env a' -> f (InnerSyntax stlc env' a'))
     -> stlc env  a
     -> f (stlc env' a)
 
@@ -55,7 +56,7 @@ type family InnerSyntax (stlc :: [*] -> * -> *) :: [*] -> * -> *
 
 -- The class of all syntaxes where a term can be generated from a DeBruijn index with no other information.
 class VarIn stlc where
-  varIn :: Idx env t -> stlc env t
+  varIn :: Typeable t => Idx env t -> stlc env t
 
 -- Syntaxes that can be rebuilt.
 --
@@ -87,8 +88,8 @@ instance (InnerSyntax stlc ~ PreOpenSTLC stlc, Substitutable stlc, Rebuildable f
       Constant c      -> pure (Constant c)
 
 shift
-  :: (Applicative f, VarIn stlc, Sink stlc)
-  => (forall t'. Idx env t' -> f (stlc env' t'))
+  :: (Typeable t, Applicative f, VarIn stlc, Sink stlc)
+  => (forall t'. Typeable t' => Idx env t' -> f (stlc env' t'))
   -> Idx          (s ': env)  t
   -> f   (stlc (s ': env') t)
 shift v ZeroIdx      = pure $ varIn ZeroIdx

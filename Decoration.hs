@@ -18,6 +18,7 @@ module Decoration where
 import Control.Applicative
 import Control.Monad
 import Data.Functor.Identity
+import Data.Typeable
 
 import AST
 import Substitution
@@ -51,9 +52,9 @@ data Shown stlc env t where
   Shown :: Show t => stlc env t -> Shown stlc env t
 
 data Subst stlc env t where
-  Subst :: (forall t. Idx env' t -> InnerSyntax stlc env t)
-       -> stlc env' t
-       -> Subst stlc env t
+  Subst :: (forall t. Typeable t => Idx env' t -> InnerSyntax stlc env t)
+        -> stlc env' t
+        -> Subst stlc env t
 
 -- | The most general form of a decoration. Instances should obey functor style
 -- laws -- i.e. lift id = id, lift f (lift g) s = lift (f . g) s
@@ -149,9 +150,9 @@ instance (inner ~ InnerSyntax stlc, VarIn inner, Rebuildable Identity inner, Inn
   => Rebuildable Identity (Subst stlc) where
   reconstruct v (Subst v' stlc) = pure $ Subst (compSubstitution v' (runIdentity . v)) stlc
 
-compSubstitution :: Rebuildable Identity stlc
-                 => (forall t. Idx env  t -> stlc env' t)
-                 -> (forall t. Idx env' t -> InnerSyntax stlc env'' t)
+compSubstitution :: (Rebuildable Identity stlc, Typeable t)
+                 => (forall t. Typeable t => Idx env  t -> stlc env' t)
+                 -> (forall t. Typeable t => Idx env' t -> InnerSyntax stlc env'' t)
                  -> Idx env t
                  -> stlc env'' t
 compSubstitution v w ix = substitute w (v ix)

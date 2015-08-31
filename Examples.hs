@@ -11,6 +11,10 @@ import AST
 import Substitution
 import Decoration
 
+-- Some decorations
+-- ===========================================================================
+--
+
 newtype LabelledSTLC env t
   = LabelledSTLC (Labelled (PreOpenSTLC LabelledSTLC) env t)
 
