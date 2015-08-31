@@ -58,3 +58,13 @@ data PreOpenSTLC stlc (env :: [*]) t where
 -- The simplest version of the calculus. Here we just "tie the recursive knot" to get the language we desire.
 --
 newtype OpenSTLC env t = OpenSTLC (PreOpenSTLC OpenSTLC env t)
+
+instance Show (OpenSTLC env t) where
+  show (OpenSTLC stlc) = s stlc
+    where
+      s :: PreOpenSTLC OpenSTLC env t -> String
+      s (Var x) = show x
+      s (Lam a) = "(\\_ -> " ++ show a ++ ")"
+      s (App a b) = "(" ++ show a ++ " " ++ show b ++ ")"
+      s (Let a b) = "(let _ = " ++ show a ++ " in " ++ show b ++ ")"
+      s (Constant _) = "Constant _"
