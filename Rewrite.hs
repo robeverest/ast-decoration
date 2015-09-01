@@ -148,6 +148,8 @@ unify x (OpenSTLC lhs) (OpenSTLC term) = unify' x lhs term
       = True
     sameIdx (There x) (SuccIdx ix) (SuccIdx ix')
       = sameIdx x ix ix'
+    sameIdx _ _            _
+      = False
 
     isIn :: InEnv a env env' env'' -> Idx env' t' -> Bool
     isIn Here      ZeroIdx      = True
@@ -200,3 +202,14 @@ test2 = lam $ id `app` var0
 
 test3 :: OpenSTLC env (Float -> Float)
 test3 = (lam $ id `app` var0) `app` id
+
+neg_neg :: Rule '[(Float -> Float)]
+neg_neg = Rule (\_ _ -> eqT) (neg (neg var0)) (\Refl -> var0)
+  where
+    neg = app var1
+
+test4 :: OpenSTLC ((Float -> Float)  ': env) ((Float -> Float -> Float) -> Float) 
+test4 = lam $ neg (constant 0.0 `plus` neg (constant 1.0) `plus` constant 2.0 `plus` neg (neg (constant 3.0)))
+  where
+    neg  = app var1
+    plus a b = app (app var0 a) b 
